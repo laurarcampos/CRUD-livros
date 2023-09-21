@@ -1,77 +1,78 @@
-import 'package:cadastra_livros/pages/home.dart';
-import 'package:cadastra_livros/pages/sql_helper.dart';
-import 'package:flutter/material.dart';
+  import 'package:flutter/material.dart';
+  import 'package:cadastra_livros/pages/sql_helper.dart';
 
-class Formulario extends StatefulWidget {
-  const Formulario({Key? key}) : super(key: key);
+  class Formulario extends StatefulWidget {
+    final int? livroId;
 
-  @override
-  State<Formulario> createState() => _FormularioState();
-}
+    const Formulario({Key? key, this.livroId}) : super(key: key);
 
-class _FormularioState extends State<Formulario> {
-  final tituloController = TextEditingController();
-  final autorController = TextEditingController();
+    @override
+    _FormularioState createState() => _FormularioState();
+  }
 
-  List<Map<String, dynamic>> livros = [];
-  bool carregando = true;
+  class _FormularioState extends State<Formulario> {
+    final TextEditingController tituloController = TextEditingController();
+    final TextEditingController autorController = TextEditingController();
 
-void _gravar(BuildContext context, [int id = -1]) async {
-    // pega os valores digitados no campo de texto
-    String titulo = tituloController.text;
-    String autor = autorController.text;
-    // salva os registros
-    int insertedId = await SqlHelper.gravar(titulo, autor, id);
-   
-    Navigator.of(context).pushReplacement( 
-      MaterialPageRoute(
-        builder: (context) => const HomeBody(),
-      ),);
-    if (insertedId > 0) {
-      const snackBar = SnackBar(
-        content: Text('Item salvo com Sucesso!'),
+    @override
+    void initState() {
+      super.initState();
+      if (widget.livroId != null) {
+        _editaLivro(widget.livroId!);
+      }
+    }
+
+    void _editaLivro(int livroId) async {
+      final livro = await SqlHelper.getlivro(livroId);
+      if (livro.isNotEmpty) {
+        tituloController.text = livro[0]['titulo'];
+        autorController.text = livro[0]['autor'];
+      }
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.livroId != null ? 'Edite o livro' : 'Cadastre um livro'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: tituloController,
+                decoration: const InputDecoration(labelText: 'Título'),
+              ),
+              TextFormField(
+                controller: autorController,
+                decoration: const InputDecoration(labelText: 'Autor'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final titulo = tituloController.text;
+                  final autor = autorController.text;
+
+                  if (titulo.isNotEmpty && autor.isNotEmpty) {
+                    if (widget.livroId != null) {
+                      final id = await SqlHelper.gravar(titulo, autor, widget.livroId!);
+                      if (id > 0) {
+                        Navigator.pop(context, true);
+                      }
+                    } else {
+                      final id = await SqlHelper.gravar(titulo, autor);
+                      if (id > 0) {
+                        Navigator.pop(context, true); 
+                      }
+                    }
+                  }
+                },
+                child: const Text('Salvar'),
+              ),
+            ],
+          ),
+        ),
       );
-
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cadastrar um livro'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: tituloController,
-              decoration: const InputDecoration(
-                labelText: 'Título: ',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: autorController,
-              decoration: const InputDecoration(
-                labelText: 'Autor: ',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            ElevatedButton(
-              onPressed: () => _gravar(context),
-              child: const Text('Salvar'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

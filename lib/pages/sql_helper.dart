@@ -20,15 +20,15 @@ class SqlHelper {
   }
 
   // cria ou atualiza um registro
-  static Future<int> gravar(String titulo, String autor, [int id = -1]) async {
-    final database = await _getDataBase();
-    final values = {'titulo': titulo, 'autor': autor};
-    if (id > 0) {
-      return database.update('livro', values, where: 'id = ?', whereArgs: [id]);
-    } else {
-      return database.insert('livro', values);
+    static Future<int> gravar(String titulo, String autor, [int id = -1]) async {
+      final database = await _getDataBase();
+      final values = {'titulo': titulo, 'autor': autor};
+      if (id > 0) {
+        return database.update('livro', values, where: 'id = ?', whereArgs: [id]);
+      } else {
+        return database.insert('livro', values);
+      }
     }
-  }
 
   // busca um livro pelo seu id
   static Future<List<Map<String, dynamic>>> getlivro(int id) async {

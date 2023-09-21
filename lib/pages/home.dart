@@ -10,7 +10,7 @@ class HomeBody extends StatefulWidget {
 }
 
 class _HomeBodyState extends State<HomeBody> {
-final tituloController = TextEditingController();
+  final tituloController = TextEditingController();
   final autorController = TextEditingController();
 
   List<Map<String, dynamic>> livros = [];
@@ -35,6 +35,48 @@ final tituloController = TextEditingController();
     _atualizaLista();
   }
 
+void _criarFormulario(int livroId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => Formulario(livroId: livroId)),
+    ).then((value) {
+      if (value == true) {
+        _atualizaLista();
+      }
+    });
+  }
+
+  Future<void> _deleteItem(Map<String, dynamic> livro) async {
+    final confirmado = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar exclusão'),
+          content: const Text('Deseja realmente excluir este livro?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Confirmar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmado == true) {
+      await SqlHelper.deleteItem(livro['id']);
+      _atualizaLista();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,6 +91,22 @@ final tituloController = TextEditingController();
                 return ListTile(
                   title: Text(livros[index]['titulo']),
                   subtitle: Text(livros[index]['autor']),
+                  trailing: SizedBox(
+                    width: 100,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () =>
+                              _criarFormulario(livros[index]['id']),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => _deleteItem(livros[index]),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
